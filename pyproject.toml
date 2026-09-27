@@ -1,0 +1,24 @@
+[project]
+name = "master-memory"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Vinay-N-Kashyap", email = "vinayrocker2002@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "networkx>=3.7",
+    "pydantic>=2.13.5",
+    "tree-sitter>=0.26.0",
+    "tree-sitter-python>=0.25.0",
+    "tree-sitter-sql>=0.3.11",
+    "tree-sitter-typescript>=0.23.2",
+]
+
+[project.scripts]
+master-memory = "master_memory:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"

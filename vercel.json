@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/src/ui/index.html" },
+    { "source": "/mission_control_data.json", "destination": "/src/ui/mission_control_data.json" },
+    { "source": "/(.*)", "destination": "/src/ui/$1" }
+  ]
+}

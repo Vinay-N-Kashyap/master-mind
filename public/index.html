@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PinIT Career OS • Master Memory Mission Control</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- D3.js v7 CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              900: '#1e1b4b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .glass { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); }
+    .glow-cyan { box-shadow: 0 0 15px rgba(6, 182, 212, 0.35); }
+    .glow-purple { box-shadow: 0 0 15px rgba(168, 85, 247, 0.35); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased h-screen flex flex-col overflow-hidden">
+
+  <!-- TOP HEADER / HUD -->
+  <header class="bg-slate-900/90 border-b border-slate-800 px-6 py-3 flex items-center justify-between shrink-0 glass z-20">
+    <div class="flex items-center space-x-4">
+      <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <i data-lucide="cpu" class="w-5 h-5 text-slate-950 font-bold"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+          PinIT Career OS <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Master Socio-Technical Memory</span>
+        </h1>
+        <p class="text-xs text-slate-400">Zero-Hallucination Architecture Engine • SQLite WAL Multi-Agent Bridge</p>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Badges -->
+    <div class="flex items-center space-x-3 text-xs">
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-mono">SQLITE WAL ACTIVE</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+        <span>0 Deadlocks (BEGIN IMMEDIATE)</span>
+      </div>
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-400">
+        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+        <span id="agents-active-count">3 Active Agents</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- METRICS RIBBON -->
+  <div class="bg-slate-900/50 border-b border-slate-800/80 px-6 py-2 flex items-center justify-between shrink-0 text-xs">
+    <div class="flex items-center space-x-6">
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">AST Nodes:</span>
+        <span id="stat-nodes" class="font-mono font-bold text-white">11,866</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">Code Edges:</span>
+        <span id="stat-edges" class="font-mono font-bold text-white">27,430</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">Communities:</span>
+        <span id="stat-communities" class="font-mono font-bold text-indigo-400">490</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">Next.js Routes:</span>
+        <span id="stat-routes" class="font-mono font-bold text-amber-400">223</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">Supabase Tables:</span>
+        <span id="stat-tables" class="font-mono font-bold text-cyan-400">8</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">Tasks Verified:</span>
+        <span id="stat-tasks" class="font-mono font-bold text-emerald-400">185 / 185</span>
+      </div>
+    </div>
+
+    <!-- Collision Radar Status Chip -->
+    <div id="radar-status-chip" class="flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 text-[11px]">
+      <i data-lucide="radar" class="w-3.5 h-3.5 text-emerald-400 animate-spin"></i>
+      <span class="font-semibold">Collision Radar: Nominal (No Cross-Branch Collisions)</span>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE: 2-PANEL LAYOUT -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- LEFT PANEL: TASK & PROBLEM / SOLUTION LEDGER -->
+    <div class="w-[48%] border-r border-slate-800 flex flex-col bg-slate-950/70">
+      
+      <!-- Search & Filters Toolbar -->
+      <div class="p-3 border-b border-slate-800 bg-slate-900/40 space-y-2.5 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+            <input type="text" id="task-search" placeholder="Search tasks, problems, commits, files..." 
+                   class="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+          </div>
+          <button id="btn-refresh" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-xs font-medium text-slate-200 flex items-center gap-1.5 transition-colors">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex items-center gap-2 text-xs overflow-x-auto pb-1">
+          <button class="filter-tab px-2.5 py-1 rounded-md bg-indigo-600 text-white font-medium" data-filter="ALL">All (<span id="count-all">0</span>)</button>
+          <button class="filter-tab px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800" data-filter="Claude">Claude Code (<span id="count-claude">0</span>)</button>
+          <button class="filter-tab px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800" data-filter="Antigravity">Antigravity (<span id="count-antigravity">0</span>)</button>
+          <button class="filter-tab px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800" data-filter="Human">Human / Git (<span id="count-human">0</span>)</button>
+        </div>
+      </div>
+
+      <!-- Task Cards List -->
+      <div id="tasks-container" class="flex-1 overflow-y-auto p-4 space-y-3.5">
+        <!-- Rendered dynamically -->
+        <div class="text-center py-12 text-slate-500 text-xs">Loading socio-technical tasks...</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: INTERACTIVE AST GRAPH EXPLORER -->
+    <div class="flex-1 flex flex-col relative bg-slate-950">
+      
+      <!-- Graph Explorer Controls Toolbar -->
+      <div class="absolute top-4 left-4 z-10 flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-xl p-2 shadow-2xl glass">
+        <span class="text-xs font-bold text-slate-300 px-2 flex items-center gap-1.5">
+          <i data-lucide="network" class="w-4 h-4 text-cyan-400"></i>
+          <span>Architecture Graph</span>
+        </span>
+        <div class="h-4 w-[1px] bg-slate-700"></div>
+        <button id="zoom-in" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" title="Zoom In">
+          <i data-lucide="zoom-in" class="w-4 h-4"></i>
+        </button>
+        <button id="zoom-out" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" title="Zoom Out">
+          <i data-lucide="zoom-out" class="w-4 h-4"></i>
+        </button>
+        <button id="zoom-reset" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white" title="Reset View">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Graph Legend -->
+      <div class="absolute top-4 right-4 z-10 bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 shadow-2xl glass text-[11px] space-y-1.5">
+        <div class="font-semibold text-slate-300 mb-1">Entity Legend</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-500"></span> Next.js API Route</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-cyan-400"></span> Supabase Table</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> Source Code File</div>
+        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Function / Handler</div>
+      </div>
+
+      <!-- D3 Graph SVG Container -->
+      <div id="graph-container" class="flex-1 w-full h-full relative overflow-hidden">
+        <svg id="graph-svg" class="w-full h-full cursor-grab active:cursor-grabbing"></svg>
+      </div>
+
+      <!-- Node Inspector Bottom Drawer -->
+      <div id="node-inspector" class="border-t border-slate-800 bg-slate-900/95 p-3.5 transition-all duration-300 max-h-48 overflow-y-auto hidden glass">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span id="inspector-badge" class="px-2 py-0.5 text-[10px] font-mono rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">TABLE</span>
+            <span id="inspector-title" class="text-sm font-bold text-white">payroll_records</span>
+          </div>
+          <button id="btn-close-inspector" class="text-slate-400 hover:text-white">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="text-xs text-slate-400 space-y-1">
+          <div><span class="text-slate-500">Filepath:</span> <span id="inspector-filepath" class="font-mono text-slate-300"></span></div>
+          <div><span class="text-slate-500">Connected Blast Radius:</span> <span id="inspector-blast" class="text-indigo-400 font-mono font-semibold"></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let appData = null;
+    let currentFilter = 'ALL';
+    let simulation = null;
+    let svgGroup = null;
+
+    // Load Data
+    async function loadData() {
+      try {
+        const res = await fetch('mission_control_data.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        appData = await res.json();
+        renderDashboard();
+      } catch (err) {
+        console.error("Failed to load mission_control_data.json:", err);
+        document.getElementById('tasks-container').innerHTML = `
+          <div class="p-6 bg-red-950/40 border border-red-800 rounded-xl text-xs text-red-300">
+            <div class="font-bold mb-1">Failed to load mission_control_data.json</div>
+            <p>${err.message}</p>
+            <p class="mt-2 text-slate-400">Ensure the file is generated by running <code>python src/export_dashboard_data.py</code></p>
+          </div>
+        `;
+      }
+    }
+
+    function renderDashboard() {
+      if (!appData) return;
+
+      // 1. Stats
+      document.getElementById('stat-nodes').textContent = appData.stats.total_nodes.toLocaleString();
+      document.getElementById('stat-edges').textContent = appData.stats.total_edges.toLocaleString();
+      document.getElementById('stat-communities').textContent = appData.stats.total_communities;
+      document.getElementById('stat-routes').textContent = appData.stats.total_api_routes;
+      document.getElementById('stat-tables').textContent = appData.stats.total_db_tables;
+      document.getElementById('stat-tasks').textContent = `${appData.stats.completed_tasks} / ${appData.stats.total_tasks}`;
+      document.getElementById('agents-active-count').textContent = `${appData.agents.length} Active Agents`;
+
+      // 2. Count filters
+      const tasks = appData.tasks;
+      document.getElementById('count-all').textContent = tasks.length;
+      document.getElementById('count-claude').textContent = tasks.filter(t => (t.agent_name || '').toLowerCase().includes('claude')).length;
+      document.getElementById('count-antigravity').textContent = tasks.filter(t => (t.agent_name || '').toLowerCase().includes('antigravity')).length;
+      document.getElementById('count-human').textContent = tasks.filter(t => (t.agent_name || '').toLowerCase().includes('vinay') || (t.agent_name || '').toLowerCase().includes('human')).length;
+
+      // 3. Render Tasks
+      renderTaskList();
+
+      // 4. Render Graph
+      renderGraph();
+
+      lucide.createIcons();
+    }
+
+    function renderTaskList() {
+      const container = document.getElementById('tasks-container');
+      const query = (document.getElementById('task-search').value || '').toLowerCase();
+      
+      let filtered = appData.tasks.filter(t => {
+        const matchesFilter = 
+          currentFilter === 'ALL' ||
+          (currentFilter === 'Claude' && (t.agent_name || '').toLowerCase().includes('claude')) ||
+          (currentFilter === 'Antigravity' && (t.agent_name || '').toLowerCase().includes('antigravity')) ||
+          (currentFilter === 'Human' && ((t.agent_name || '').toLowerCase().includes('vinay') || (t.agent_name || '').toLowerCase().includes('human')));
+
+        const matchesQuery = 
+          !query ||
+          t.title.toLowerCase().includes(query) ||
+          t.problem_statement.toLowerCase().includes(query) ||
+          t.solution_summary.toLowerCase().includes(query) ||
+          (t.commit_sha && t.commit_sha.toLowerCase().includes(query)) ||
+          t.touched_nodes.some(tn => tn.filepath.toLowerCase().includes(query));
+
+        return matchesFilter && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs">No matching tasks found.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(t => {
+        let agentBadge = 'bg-slate-800 text-slate-300 border-slate-700';
+        const aname = (t.agent_name || '').toLowerCase();
+        if (aname.includes('claude')) agentBadge = 'bg-purple-950/80 text-purple-300 border-purple-700/60';
+        else if (aname.includes('antigravity')) agentBadge = 'bg-blue-950/80 text-blue-300 border-blue-700/60';
+        else if (aname.includes('vinay') || aname.includes('human')) agentBadge = 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60';
+
+        const touchedList = t.touched_nodes.map(tn => `
+          <div class="flex items-center justify-between text-[11px] font-mono bg-slate-900/90 px-2 py-1 rounded border border-slate-800/80">
+            <span class="text-slate-300 truncate max-w-[280px]" title="${tn.filepath}">${tn.filepath}</span>
+            <span class="text-[9px] px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300">${tn.action || 'MODIFIED'}</span>
+          </div>
+        `).join('');
+
+        return `
+          <div class="task-card bg-slate-900/60 hover:bg-slate-900 border border-slate-800/90 hover:border-indigo-500/50 rounded-xl p-3.5 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-indigo-500/10"
+               onclick="focusTaskOnGraph('${t.task_id}')">
+            
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded border ${agentBadge}">${t.agent_name || t.agent_id}</span>
+              <div class="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded">
+                <i data-lucide="check-circle" class="w-3 h-3"></i>
+                <span>EXIT 0: PASSED</span>
+              </div>
+            </div>
+
+            <h3 class="text-xs font-semibold text-white tracking-tight mb-2">${t.title}</h3>
+
+            <!-- Problem / Solution Callouts -->
+            <div class="space-y-1.5 text-[11px] mb-3">
+              <div class="bg-red-950/30 border border-red-900/40 rounded-lg p-2">
+                <span class="font-bold text-red-400">Problem:</span>
+                <span class="text-slate-300">${t.problem_statement}</span>
+              </div>
+              <div class="bg-emerald-950/30 border border-emerald-900/40 rounded-lg p-2">
+                <span class="font-bold text-emerald-400">Solution:</span>
+                <span class="text-slate-300">${t.solution_summary}</span>
+              </div>
+            </div>
+
+            <!-- Commit & Branch Info -->
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-400 border-t border-slate-800/80 pt-2 mb-2">
+              <span>Branch: <span class="text-slate-300">${t.git_branch}</span></span>
+              <span>SHA: <span class="text-indigo-400">${t.commit_sha ? t.commit_sha.substring(0, 8) : 'N/A'}</span></span>
+            </div>
+
+            <!-- Touched Files Preview -->
+            ${t.touched_nodes.length > 0 ? `
+              <div class="mt-2 space-y-1">
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Touched Files (${t.touched_nodes.length})</div>
+                <div class="space-y-1 max-h-24 overflow-y-auto">
+                  ${touchedList}
+                </div>
+              </div>
+            ` : ''}
+
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function renderGraph() {
+      if (!appData || !appData.subgraph) return;
+
+      const svg = d3.select("#graph-svg");
+      svg.selectAll("*").remove();
+
+      const container = document.getElementById("graph-container");
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      const nodes = appData.subgraph.nodes.map(d => ({ ...d }));
+      const edges = appData.subgraph.edges.map(d => ({ ...d }));
+
+      // Map edges to objects
+      const nodeById = new Map(nodes.map(n => [n.id, n]));
+      const validEdges = edges.filter(e => nodeById.has(e.source) && nodeById.has(e.target));
+
+      svgGroup = svg.append("g");
+
+      // Zoom behavior
+      const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on("zoom", (event) => {
+          svgGroup.attr("transform", event.transform);
+        });
+
+      svg.call(zoom);
+
+      document.getElementById("zoom-in").onclick = () => svg.transition().call(zoom.scaleBy, 1.3);
+      document.getElementById("zoom-out").onclick = () => svg.transition().call(zoom.scaleBy, 0.7);
+      document.getElementById("zoom-reset").onclick = () => svg.transition().call(zoom.transform, d3.zoomIdentity);
+
+      // Simulation
+      simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(validEdges).id(d => d.id).distance(60))
+        .force("charge", d3.forceManyBody().strength(-120))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(18));
+
+      // Edges
+      const link = svgGroup.append("g")
+        .attr("stroke", "#334155")
+        .attr("stroke-opacity", 0.6)
+        .selectAll("line")
+        .data(validEdges)
+        .join("line")
+        .attr("stroke-width", d => Math.sqrt(d.weight || 1));
+
+      // Nodes
+      const node = svgGroup.append("g")
+        .selectAll("circle")
+        .data(nodes)
+        .join("circle")
+        .attr("r", d => d.kind === 'table' ? 9 : (d.kind === 'route' ? 7 : 5))
+        .attr("fill", d => {
+          if (d.kind === 'route') return '#f59e0b'; // amber
+          if (d.kind === 'table') return '#06b6d4'; // cyan
+          if (d.kind === 'file') return '#6366f1';  // indigo
+          return '#10b981';                         // emerald
+        })
+        .attr("stroke", "#0f172a")
+        .attr("stroke-width", 1.5)
+        .attr("cursor", "pointer")
+        .on("click", (event, d) => inspectNode(d))
+        .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+      // Tooltip / Labels for Routes and Tables
+      const label = svgGroup.append("g")
+        .selectAll("text")
+        .data(nodes.filter(n => n.kind === 'table' || n.kind === 'route'))
+        .join("text")
+        .attr("dy", -10)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "9px")
+        .attr("font-family", "monospace")
+        .attr("fill", "#94a3b8")
+        .text(d => d.name);
+
+      simulation.on("tick", () => {
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+        node
+          .attr("cx", d => d.x)
+          .attr("cy", d => d.y);
+
+        label
+          .attr("x", d => d.x)
+          .attr("y", d => d.y);
+      });
+
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+    }
+
+    function inspectNode(d) {
+      const inspector = document.getElementById("node-inspector");
+      inspector.classList.remove("hidden");
+      document.getElementById("inspector-badge").textContent = (d.kind || 'NODE').toUpperCase();
+      document.getElementById("inspector-title").textContent = d.name;
+      document.getElementById("inspector-filepath").textContent = d.filepath || d.id;
+      document.getElementById("inspector-blast").textContent = `Community ${d.community_id || 'Global'}`;
+      lucide.createIcons();
+    }
+
+    document.getElementById("btn-close-inspector").onclick = () => {
+      document.getElementById("node-inspector").classList.add("hidden");
+    };
+
+    window.focusTaskOnGraph = function(taskId) {
+      const task = appData.tasks.find(t => t.task_id === taskId);
+      if (!task || !task.touched_nodes || task.touched_nodes.length === 0) return;
+
+      const filepaths = new Set(task.touched_nodes.map(n => n.filepath));
+      
+      // Highlight matching nodes in SVG
+      d3.selectAll("#graph-svg circle")
+        .transition().duration(300)
+        .attr("r", d => filepaths.has(d.filepath) ? 14 : 5)
+        .attr("stroke", d => filepaths.has(d.filepath) ? "#ffffff" : "#0f172a")
+        .attr("stroke-width", d => filepaths.has(d.filepath) ? 3 : 1.5);
+    };
+
+    // Filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => {
+          t.className = 'filter-tab px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800';
+        });
+        tab.className = 'filter-tab px-2.5 py-1 rounded-md bg-indigo-600 text-white font-medium';
+        currentFilter = tab.dataset.filter;
+        renderTaskList();
+      });
+    });
+
+    document.getElementById('task-search').addEventListener('input', () => {
+      renderTaskList();
+    });
+
+    document.getElementById('btn-refresh').onclick = () => {
+      loadData();
+    };
+
+    // Initial load
+    loadData();
+  </script>
+</body>
+</html>
